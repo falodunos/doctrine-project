@@ -548,22 +548,25 @@ class Proxy implements ObjectManagerAwareInterface
         if ($this->displayEmptyItem) {
             $options[''] = $this->getEmptyItemLabel();
         }
-
+        
+        $propertyIsArray = is_array($this->property);// $this->property is select property: string or array e.g. array($statusName, $statusValue = null)
+        $labelProperty = $propertyIsArray ? $this->property[0]:$this->property; // returns the option label property
+        
         foreach ($objects as $key => $object) {
             if (null !== ($generatedLabel = $this->generateLabel($object))) {
                 $label = $generatedLabel;
-            } elseif ($property = $this->property) {
-                if ($this->isMethod == false && !$metadata->hasField($property)) {
+            } elseif ($labelProperty) {
+                if ($this->isMethod == false && !$metadata->hasField($labelProperty)) {
                     throw new RuntimeException(
                         sprintf(
                             'Property "%s" could not be found in object "%s"',
-                            $property,
+                            $labelProperty,
                             $targetClass
                         )
                     );
                 }
 
-                $getter = 'get' . ucfirst($property);
+                $getter = 'get' . ucfirst($labelProperty);
 
                 if (!is_callable(array($object, $getter))) {
                     throw new RuntimeException(
@@ -589,7 +592,12 @@ class Proxy implements ObjectManagerAwareInterface
             if (count($identifier) > 1) {
                 $value = $key;
             } else {
-                $value = current($metadata->getIdentifierValues($object));
+                if($propertyIsArray && count($this->property) > 1){ 
+                    $getter = 'get' . ucfirst($this->property[1]);
+                    $value = $object->$getter(); // set custom non-entity id proerty value for select option value
+                }else{
+                   $value = current($metadata->getIdentifierValues($object)); 
+                }
             }
 
             foreach ($this->getOptionAttributes() as $optionKey => $optionValue) {

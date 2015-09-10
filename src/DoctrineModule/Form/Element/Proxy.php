@@ -652,7 +652,7 @@ class Proxy implements ObjectManagerAwareInterface
 
                 continue;
             }
-
+ 
             $optgroupDefault = $this->getOptgroupDefault();
 
             // No optgroup_default has been provided. Line up without a group
